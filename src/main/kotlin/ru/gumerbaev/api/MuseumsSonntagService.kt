@@ -14,14 +14,18 @@ class MuseumsSonntagService(private val client: MuseumsSonntagClient) {
         private val logger = LoggerFactory.getLogger(MuseumsSonntagService::class.java)
     }
 
-    private val museumsCache = Suppliers.memoizeWithExpiration({ client.museums() }, 1, TimeUnit.HOURS)
+    private val museumsCache = Suppliers.memoizeWithExpiration(
+        { client.museums().museums?.filter { it.id != 67 }?.sortedBy { it.id } },
+        1,
+        TimeUnit.HOURS
+    )
 
     fun getMuseumsInfo(): List<Museum> {
-        return museumsCache.get().museums?.sortedBy { it.id } ?: throw IllegalStateException("No museums available")
+        return museumsCache.get() ?: throw IllegalStateException("No museums available")
     }
 
     fun getMuseumInfo(id: Int): Museum {
-        return museumsCache.get().museums?.first { it.id == id } ?: throw NoSuchElementException("Museum not found")
+        return museumsCache.get()?.first { it.id == id } ?: throw NoSuchElementException("Museum not found")
     }
 
     fun getFreeCapacities(museumId: Int, date: LocalDate): List<Date> {
