@@ -10,7 +10,7 @@ import javax.persistence.OneToMany
 @Entity
 data class AppUser(
     @Id val id: Long,
-    val name: String,
+    var name: String,
     @OneToMany(cascade = [CascadeType.REMOVE]) val tasks: Collection<Task>? = null,
     @DateCreated val createdDate: Date? = null
 )

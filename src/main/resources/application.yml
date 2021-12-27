@@ -15,7 +15,7 @@ jpa.default.properties.hibernate.hbm2ddl.auto: update
 
 museumssonntag:
   bot: "1234567890:RANDOMHASHGIVENBYTELEGRAM"
-  users: "123456789:Aydar,987654321:Sveta"
+  admin: "123456789:Aydar"
   daysMax: 8
   daysMin: 6
   interval: '180s'
