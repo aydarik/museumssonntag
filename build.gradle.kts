@@ -43,9 +43,8 @@ dependencies {
     implementation("com.google.guava:guava:31.0.1-jre") // Guava Cache
     runtimeOnly("org.apache.logging.log4j:log4j-api:2.17.0")
     runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
-    runtimeOnly("org.postgresql:postgresql")
+    runtimeOnly("com.h2database:h2")
     testImplementation("org.testcontainers:junit-jupiter")
-    testImplementation("org.testcontainers:postgresql")
     testImplementation("org.testcontainers:testcontainers")
     implementation("io.micronaut:micronaut-validation")
 

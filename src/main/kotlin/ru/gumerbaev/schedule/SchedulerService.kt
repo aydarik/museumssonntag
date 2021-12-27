@@ -1,5 +1,6 @@
 package ru.gumerbaev.schedule
 
+import io.micronaut.context.annotation.Value
 import io.micronaut.scheduling.annotation.Scheduled
 import jakarta.inject.Singleton
 import org.slf4j.LoggerFactory
@@ -17,20 +18,23 @@ import kotlin.random.Random.Default.nextLong
 class SchedulerService(
     private val api: MuseumsSonntagService,
     private val telegram: TelegramService,
-    private val taskRepository: TaskRepository
+    private val taskRepository: TaskRepository,
+    @Value("\${museumssonntag.daysMax}") private val daysMax: Long,
+    @Value("\${museumssonntag.daysMin}") private val daysMin: Long
 ) {
 
     companion object {
         private val logger = LoggerFactory.getLogger(SchedulerService::class.java)
+        private const val MIN_DELAY_SEC = 60
     }
 
-    @Scheduled(fixedDelay = "180s", initialDelay = "60s")
+    @Scheduled(fixedDelay = "\${museumssonntag.interval}", initialDelay = "${MIN_DELAY_SEC}s")
     fun checkTickets() {
-        logger.debug("Checking tickets information")
         val now = LocalDate.now()
         val nextSunday = calculateNextSunday()
-        logger.debug("Next Sunday: $nextSunday")
-        if (ChronoUnit.DAYS.between(now, nextSunday) > 8) return
+        val daysBetween = ChronoUnit.DAYS.between(now, nextSunday)
+        logger.debug("Next Sunday: $nextSunday, days between: $daysBetween")
+        if (daysBetween > daysMax || daysBetween < daysMin) return
 
         logger.debug("Time to check tickets!")
         val map = HashMap<Int, MutableSet<AppUser>>()
@@ -40,7 +44,7 @@ class SchedulerService(
 
         map.keys.forEach { museumId ->
             logger.debug("Checking museum $museumId for $nextSunday")
-            val sleep = nextLong(0, 120000 / map.size.toLong())
+            val sleep = nextLong(0, MIN_DELAY_SEC * 1000 / map.size.toLong())
             logger.debug("Sleeping $sleep ms...")
             Thread.sleep(sleep)
 
@@ -61,7 +65,7 @@ class SchedulerService(
     private fun calculateNextSunday(): LocalDate {
         val now = LocalDate.now()
         val sunday = now.with(TemporalAdjusters.firstInMonth(DayOfWeek.SUNDAY))
-        return if (sunday.isAfter(now)) {
+        return if (sunday.isAfter(now.plusDays(daysMin))) {
             sunday
         } else {
             now.plusMonths(1).with(TemporalAdjusters.firstInMonth(DayOfWeek.SUNDAY))

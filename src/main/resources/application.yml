@@ -4,15 +4,18 @@ micronaut:
 
 datasources:
   default:
-    url: jdbc:postgresql://localhost:5432/postgres
-    driverClassName: org.postgresql.Driver
-    username: postgres
-    password: 'password123'
+    url: jdbc:h2:file:./db/museumssonntag
+    driverClassName: org.h2.Driver
+    username: sa
+    password: ''
     schema-generate: CREATE_DROP
-    dialect: POSTGRES
+    dialect: H2
 
 jpa.default.properties.hibernate.hbm2ddl.auto: update
 
 museumssonntag:
   bot: "1234567890:RANDOMHASHGIVENBYTELEGRAM"
   users: "123456789:Aydar,987654321:Sveta"
+  daysMax: 8
+  daysMin: 6
+  interval: '180s'
