@@ -12,7 +12,6 @@ class AppContext(
     userRepository: AppUserRepository,
     @Value("\${museumssonntag.users}") users: String
 ) {
-
     companion object {
         val logger: Logger = LoggerFactory.getLogger(AppContext::class.java)
     }

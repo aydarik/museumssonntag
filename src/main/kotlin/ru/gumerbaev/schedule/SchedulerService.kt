@@ -22,7 +22,6 @@ class SchedulerService(
     @Value("\${museumssonntag.daysMax}") private val daysMax: Long,
     @Value("\${museumssonntag.daysMin}") private val daysMin: Long
 ) {
-
     companion object {
         private val logger = LoggerFactory.getLogger(SchedulerService::class.java)
         private const val MIN_DELAY_SEC = 60
@@ -51,10 +50,10 @@ class SchedulerService(
             val freeSlots = api.getFreeCapacities(museumId, nextSunday)
             if (freeSlots.isNotEmpty()) {
                 logger.debug("Found some available slots")
-
                 val museum = api.getMuseumInfo(museumId)
+                val url = "https://shop.museumssonntag.berlin/#/tickets/time?museum_id=$museumId&group=timeSlot&date=$nextSunday"
                 map[museumId]!!.forEach { user ->
-                    telegram.sendText(user, "Found some slots available for *$nextSunday* to *${museum.title}*")
+                    telegram.sendText(user, "Found some slots available for *$nextSunday* to *${museum.title}*\n$url")
                 }
                 taskRepository.deleteByMuseum(museumId)
                 logger.debug("Task for museum $museumId deleted")

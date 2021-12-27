@@ -10,7 +10,6 @@ import java.util.concurrent.TimeUnit
 
 @Singleton
 class MuseumsSonntagService(private val client: MuseumsSonntagClient) {
-
     companion object {
         private val logger = LoggerFactory.getLogger(MuseumsSonntagService::class.java)
     }
