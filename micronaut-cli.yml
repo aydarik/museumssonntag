@@ -1,0 +1,6 @@
+applicationType: default
+defaultPackage: ru.gumerbaev
+testFramework: junit
+sourceLanguage: kotlin
+buildTool: gradle_kotlin
+features: [annotation-api, app-name, data, data-jpa, gradle, http-client, jdbc-hikari, jib, junit, kotlin, kotlin-application, kotlin-build, kotlin-extension-functions, log4j2, micronaut-build, mockito, netty-server, postgres, problem-json, readme, shade, testcontainers, yaml]
