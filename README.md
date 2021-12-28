@@ -21,8 +21,3 @@
 ## Feature testcontainers documentation
 
 - [https://www.testcontainers.org/](https://www.testcontainers.org/)
-
-## Feature problem-json documentation
-
-- [Micronaut Problem JSON documentation](https://micronaut-projects.github.io/micronaut-problem-json/latest/guide/index.html)
-

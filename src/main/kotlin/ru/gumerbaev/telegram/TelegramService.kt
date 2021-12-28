@@ -7,8 +7,8 @@ import com.pengrad.telegrambot.model.Update
 import com.pengrad.telegrambot.model.request.ParseMode
 import com.pengrad.telegrambot.request.SendMessage
 import com.pengrad.telegrambot.request.SendPhoto
+import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Value
-import jakarta.inject.Singleton
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
 import ru.gumerbaev.api.MuseumsSonntagService
@@ -18,9 +18,10 @@ import ru.gumerbaev.jpa.entity.Task
 import ru.gumerbaev.jpa.repository.AppUserRepository
 import ru.gumerbaev.jpa.repository.TaskRepository
 
-@Singleton
+@Context
 class TelegramService(
     @Value("\${museumssonntag.bot}") botId: String,
+    @Value("\${museumssonntag.admin}") adminId: String,
     private val userRepository: AppUserRepository,
     private val taskRepository: TaskRepository,
     private val api: MuseumsSonntagService
@@ -31,20 +32,18 @@ class TelegramService(
 
     private val bot = TelegramBot(botId)
     private val userCache = HashMap<Long, AppUser>()
-    private lateinit var admin: AppUser
+    private val admin: AppUser
 
-    fun init(adminId: Long) {
-        logger.debug("Initializing listener...")
+    init {
         bot.setUpdatesListener { updates: List<Update?>? ->
             updates?.filter { it?.message() != null }?.forEach { processMessage(it?.message()!!) }
             UpdatesListener.CONFIRMED_UPDATES_ALL
         }
-        logger.debug("Listener initialized successfully")
+        logger.info("Telegram listener initialized")
 
-        logger.debug("Getting available users...")
         userRepository.findAll().forEach { userCache[it.id] = it }
-        admin = userCache[adminId]!!
-        logger.debug("Users loaded")
+        admin = userCache[adminId.split(":")[0].toLong()]!!
+        logger.info("Users loaded, admin is ${admin.name}")
     }
 
     private fun processMessage(message: Message) {
@@ -59,23 +58,20 @@ class TelegramService(
         }
 
         if (text != null) {
-            logger.info("Message from ${user.name} received: `$text`")
+            logger.info("Message from ${user.name} received: $text")
             try {
                 processTextMessage(user, text)
             } catch (e: Exception) {
                 logger.error("Error on the workflow", e)
                 sendText(user, "Sorry, something went wrong \uD83D\uDE14")
             }
-        } else {
-            sendText(user, "Sorry, I can only process text messages.")
-        }
+        } else sendText(user, "Sorry, I can only process text messages.")
     }
 
     private fun processTextMessage(user: AppUser, text: String) {
         if (tryAdminCommands(user, text)) return
         when (text) {
-            "/start" -> sendText(user, "Hello ${user.name} 😃")
-                .also { processTextMessage(user, "/help") }
+            "/start" -> sendText(user, "Hello ${user.name} 😃").also { processTextMessage(user, "/help") }
             "/list" -> sendText(user, formatMuseumList())
             "/tasks" -> sendText(user, formatUserTasks(user))
             "/help" -> sendText(user, formatHelpText(user))
@@ -93,14 +89,8 @@ class TelegramService(
 
     private fun tryAdminCommands(user: AppUser, text: String): Boolean {
         if (user != admin) return false
-        if (text.startsWith("/adminUsers")) {
-            adminUsers(user, text)
-            return true
-        }
-        if (text.startsWith("/adminTasks")) {
-            adminTasks(user, text)
-            return true
-        }
+        if (text.startsWith("/adminUsers")) adminUsers(user, text).also { return true }
+        if (text.startsWith("/adminTasks")) adminTasks(user, text).also { return true }
         return false
     }
 
@@ -160,8 +150,8 @@ class TelegramService(
 
     private fun formatUserTasks(user: AppUser): String {
         val userTasks = taskRepository.findByUser(user)
-        return if (userTasks.isEmpty()) "Nothing to check yet" else userTasks
-            .joinToString("\n") { "*${it.museum}*: ${api.getMuseumInfo(it.museum).title}" }
+        return if (userTasks.isEmpty()) "Nothing to check yet"
+        else userTasks.joinToString("\n") { "*${it.museum}*: ${api.getMuseumInfo(it.museum).title}" }
     }
 
     private fun createOrDeleteTask(user: AppUser, text: String) {
@@ -184,7 +174,7 @@ class TelegramService(
     }
 
     private fun sendBooking(user: AppUser, museum: Museum) {
-        logger.info("Sending booking to ${user.name}: '${museum.title}'")
+        logger.info("Sending booking to ${user.name} for ${museum.id}: ${museum.title}")
         bot.execute(
             SendPhoto(user.id, museum.picture.detail)
                 .caption("Ok, I'll notify you about tickets to *${museum.title}*")
@@ -193,7 +183,7 @@ class TelegramService(
     }
 
     fun sendText(user: AppUser, textToSend: String) {
-        logger.debug("Sending text to ${user.name}")
+        logger.debug("Sending message to ${user.name}")
         bot.execute(SendMessage(user.id, textToSend).parseMode(ParseMode.Markdown))
     }
 }

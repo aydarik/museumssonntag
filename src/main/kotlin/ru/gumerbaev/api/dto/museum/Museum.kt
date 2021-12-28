@@ -1,3 +1,3 @@
 package ru.gumerbaev.api.dto.museum
 
-data class Museum(val id: Int, var title: String, val picture: Picture)
+data class Museum(val id: Int, val title: String, val picture: Picture)
