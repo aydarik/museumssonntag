@@ -38,8 +38,7 @@ class TelegramService(
         bot.setUpdatesListener { updates: List<Update?>? ->
             updates?.filter { it?.message() != null }?.forEach { processMessage(it?.message()!!) }
             UpdatesListener.CONFIRMED_UPDATES_ALL
-        }
-        logger.info("Telegram listener initialized")
+        }.also { logger.info("Telegram listener initialized") }
 
         userRepository.findAll().forEach { userCache[it.id] = it }
         admin = userCache[adminId.split(":")[0].toLong()]!!
@@ -51,12 +50,11 @@ class TelegramService(
         val user = userCache[chat.id()]
         val text = message.text()
         if (user == null) {
-            logger.warn("Message from unknown user ${chat.id()}:${chat.firstName()}: '$text'")
+            logger.warn("Message from unknown user ${chat.id()}:${chat.firstName()}: $text")
             sendText(AppUser(chat.id(), "Anonymous"), "Sorry, you are not allowed to write me.")
             if (text == "/start") sendText(admin, "${chat.id()}:${chat.firstName()} requested to join")
             return
         }
-
         if (text != null) {
             logger.info("Message from ${user.name} received: $text")
             try {
@@ -65,7 +63,9 @@ class TelegramService(
                 logger.error("Error on the workflow", e)
                 sendText(user, "Sorry, something went wrong \uD83D\uDE14")
             }
-        } else sendText(user, "Sorry, I can only process text messages.")
+            return
+        }
+        sendText(user, "Sorry, I can only process text messages.")
     }
 
     private fun processTextMessage(user: AppUser, text: String) {
@@ -169,7 +169,7 @@ class TelegramService(
             }
         } catch (e: Exception) {
             logger.warn("Incorrect message from ${user.name}", e)
-            sendText(user, "Hmm, looks like not correct museum ID")
+            sendText(user, "Hmm, looks like not correct museum ID.")
         }
     }
 

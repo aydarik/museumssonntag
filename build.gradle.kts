@@ -35,13 +35,11 @@ dependencies {
     implementation("io.micronaut.kotlin:micronaut-kotlin-runtime")
     implementation("io.micronaut.sql:micronaut-jdbc-hikari")
     implementation("jakarta.annotation:jakarta.annotation-api")
-    implementation("org.apache.logging.log4j:log4j-core:2.17.0")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
     implementation("com.github.pengrad:java-telegram-bot-api:5.5.0") // Telegram SDK
     implementation("com.google.guava:guava:31.0.1-jre") // Guava Cache
-    runtimeOnly("org.apache.logging.log4j:log4j-api:2.17.0")
-    runtimeOnly("org.apache.logging.log4j:log4j-slf4j-impl:2.17.0")
+    runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.h2database:h2")
     testImplementation("org.testcontainers:junit-jupiter")
     testImplementation("org.testcontainers:testcontainers")
@@ -50,7 +48,6 @@ dependencies {
     runtimeOnly("com.fasterxml.jackson.module:jackson-module-kotlin")
 
     testImplementation("org.mockito:mockito-core")
-
 }
 
 application {

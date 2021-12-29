@@ -31,7 +31,6 @@ class SchedulerService(
     private var isTimeToCheck: Boolean = false
 
     init {
-        logger.info("Days between configuration: $daysMin ≤ X ≤ $daysMax")
         checkIfTimeToBook()
     }
 
@@ -72,7 +71,8 @@ class SchedulerService(
         logger.info("Next sunday: $nextSunday")
 
         val daysBetween = ChronoUnit.DAYS.between(now, nextSunday)
-        logger.debug("Days between: $daysBetween")
+        logger.info("Days between: $daysMin ≤ $daysBetween ≤ $daysMax")
         isTimeToCheck = !(daysBetween > daysMax || daysBetween < daysMin)
+        logger.info("Checking active: $isTimeToCheck")
     }
 }
