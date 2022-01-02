@@ -46,16 +46,22 @@ class SchedulerService(
             val sleep = nextLong(0, MIN_DELAY_SEC * 1000 / museumUsersMap.size.toLong())
             logger.debug("Sleeping $sleep ms...").also { Thread.sleep(sleep) }
             logger.info("Checking museum $museumId for $nextSunday")
-            if (api.hasFreeCapacity(museumId, nextSunday))
-                sendAvailableMessages(museumId, museumUsersMap[museumId], nextSunday)
-            else logger.debug("No available slots for $museumId")
+            val capacities = api.getCapacities(museumId, nextSunday)
+            logger.info("Available slots: ${capacities.first} / ${capacities.second}")
+            if (capacities.first > 0)
+                sendAvailableMessages(museumId, museumUsersMap[museumId], nextSunday, capacities)
         }
     }
 
-    private fun sendAvailableMessages(museumId: Int, users: Set<AppUser>?, nextSunday: LocalDate) {
-        logger.info("Found some available slots")
+    private fun sendAvailableMessages(
+        museumId: Int,
+        users: Set<AppUser>?,
+        nextSunday: LocalDate,
+        capacities: Pair<Int, Int>
+    ) {
         val museum = api.getMuseumInfo(museumId)
-        val textToSend = "Found some slots available for *$nextSunday* to *${museum.title}*\n" +
+        val textToSend = "Found ${capacities.first} out of ${capacities.second} " +
+                "available slots for *$nextSunday* to *${museum.title}*\n" +
                 "https://shop.museumssonntag.berlin/#/tickets/time?museum_id=$museumId&group=timeSlot&date=$nextSunday"
         users?.forEach { user -> telegram.sendText(user, textToSend) }
         taskRepository.deleteByMuseum(museumId)
@@ -66,13 +72,13 @@ class SchedulerService(
     fun checkIfTimeToBook() {
         val now = LocalDate.now()
         val sunday = now.with(TemporalAdjusters.firstInMonth(DayOfWeek.SUNDAY))
-        nextSunday = if (sunday.isAfter(now.plusDays(daysMin))) sunday
-        else now.plusMonths(1).with(TemporalAdjusters.firstInMonth(DayOfWeek.SUNDAY))
+        nextSunday = if (sunday.isBefore(now)) {
+            now.plusMonths(1).with(TemporalAdjusters.firstInMonth(DayOfWeek.SUNDAY))
+        } else sunday
         logger.info("Next sunday: $nextSunday")
 
         val daysBetween = ChronoUnit.DAYS.between(now, nextSunday)
-        logger.info("Days between: $daysMin ≤ $daysBetween ≤ $daysMax")
         isTimeToCheck = !(daysBetween > daysMax || daysBetween < daysMin)
-        logger.info("Checking active: $isTimeToCheck")
+        logger.info("$daysMin ≤ $daysBetween ≤ $daysMax: $isTimeToCheck")
     }
 }

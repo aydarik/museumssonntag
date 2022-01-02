@@ -25,10 +25,11 @@ class MuseumsSonntagService(private val client: MuseumsSonntagClient) {
         return museumsCache.get()?.first { it.id == id } ?: throw NoSuchElementException("Museum not found")
     }
 
-    fun hasFreeCapacity(museumId: Int, date: LocalDate): Boolean {
+    fun getCapacities(museumId: Int, date: LocalDate): Pair<Int, Int> {
         val ticketIds = client.tickets(museumId, date).tickets.map { it.id }
-        if (ticketIds.none { true }) logger.warn("No tickets found for museum $museumId").also { return false }
+        if (ticketIds.none { true }) logger.warn("No tickets found for museum $museumId").also { return 0 to 0 }
         val capacityData = client.capacities(date, ticketIds).data
-        return capacityData.values.any { data -> data.capacities.values.any { it > 0 } }
+        return capacityData.values.sumOf { data -> data.capacities.values.sum() } to
+                capacityData.values.sumOf { data -> data.totalCapacities.values.sum() }
     }
 }
