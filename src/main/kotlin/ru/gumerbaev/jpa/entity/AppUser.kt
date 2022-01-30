@@ -11,6 +11,7 @@ import javax.persistence.OneToMany
 data class AppUser(
     @Id val id: Long,
     var name: String,
+    var webhook: String? = null,
     @OneToMany(cascade = [CascadeType.REMOVE]) val tasks: Collection<Task>? = null,
     @DateCreated val createdDate: Date? = null
 )

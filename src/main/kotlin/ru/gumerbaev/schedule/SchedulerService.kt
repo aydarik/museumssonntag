@@ -1,13 +1,20 @@
 package ru.gumerbaev.schedule
 
+import com.fasterxml.jackson.databind.ObjectMapper
 import io.micronaut.context.annotation.Context
 import io.micronaut.context.annotation.Value
+import io.micronaut.http.HttpHeaders
+import io.micronaut.http.MediaType
 import io.micronaut.scheduling.annotation.Scheduled
 import org.slf4j.LoggerFactory
 import ru.gumerbaev.api.MuseumsSonntagService
 import ru.gumerbaev.jpa.entity.AppUser
 import ru.gumerbaev.jpa.repository.TaskRepository
 import ru.gumerbaev.telegram.TelegramService
+import java.net.URI
+import java.net.http.HttpClient
+import java.net.http.HttpRequest
+import java.net.http.HttpResponse
 import java.time.DayOfWeek
 import java.time.LocalDate
 import java.time.temporal.ChronoUnit
@@ -29,6 +36,7 @@ class SchedulerService(
 
     private lateinit var nextSunday: LocalDate
     private var isTimeToCheck: Boolean = false
+    private val client = HttpClient.newBuilder().build()
 
     init {
         checkIfTimeToBook()
@@ -66,22 +74,30 @@ class SchedulerService(
         val textToSend = "Found ${capacities.first} out of ${capacities.second} " +
                 "available slots for *$nextSunday* to *${museum.title}*\n" +
                 "https://shop.museumssonntag.berlin/#/tickets/time?museum_id=$museumId&group=timeSlot&date=$nextSunday"
-        users?.forEach { user -> telegram.sendText(user, textToSend) }
+        users?.forEach { telegram.sendText(it, textToSend) }
+        webhookIfNeeded(users, Message("Found ${capacities.first} available slots for $nextSunday to ${museum.title}"))
         taskRepository.deleteByMuseum(museumId)
         logger.info("Task for museum $museumId deleted")
     }
 
     private fun sendNotAvailableMessages(
-        museumId: Int,
-        users: Set<AppUser>?,
-        nextSunday: LocalDate,
-        capacities: Pair<Int, Int>
+        museumId: Int, users: Set<AppUser>?, nextSunday: LocalDate, capacities: Pair<Int, Int>
     ) {
         val museum = api.getMuseumInfo(museumId)
         val textToSend = "All ${capacities.second} slots are already reserved for *$nextSunday* to *${museum.title}*"
         users?.forEach { user -> telegram.sendText(user, textToSend) }
         taskRepository.deleteByMuseum(museumId)
         logger.info("Task for museum $museumId deleted")
+    }
+
+    private fun webhookIfNeeded(users: Set<AppUser>?, message: Message) {
+        users?.filter { !it.webhook.isNullOrEmpty() }?.forEach {
+            val requestBody = ObjectMapper().writeValueAsString(message)
+            val request = HttpRequest.newBuilder().uri(URI.create(it.webhook!!))
+                .header(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON)
+                .POST(HttpRequest.BodyPublishers.ofString(requestBody)).build()
+            client.send(request, HttpResponse.BodyHandlers.ofString())
+        }
     }
 
     @Scheduled(cron = "0 0 * * *")

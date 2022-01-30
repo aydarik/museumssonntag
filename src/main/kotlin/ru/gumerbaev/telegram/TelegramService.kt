@@ -102,9 +102,13 @@ class TelegramService(
             val userId = userSplit[0].toLong()
             if (userSplit.size > 1) {
                 val userName = userSplit[1]
+                val webhookUrl = if (split.size > 2) split[2] else null
                 userCache[userId] =
-                    userRepository.update(userCache[userId]?.apply { name = userName } ?: AppUser(userId, userName))
-                textToSend = "User $userName added with ID: $userId"
+                    userRepository.update(userCache[userId]?.apply {
+                        name = userName
+                        webhook = webhookUrl
+                    } ?: AppUser(userId, userName, webhookUrl))
+                textToSend = "User $userName added/updated with ID: $userId"
                 logger.info(textToSend)
             } else {
                 userCache.remove(userId).also { if (it != null) userRepository.delete(it) }
@@ -112,7 +116,9 @@ class TelegramService(
                 logger.info(textToSend)
             }
         } else {
-            textToSend = userRepository.findAll().joinToString("\n") { "${it.id} -> ${it.name}" }
+            textToSend = userRepository.findAll().joinToString("\n") {
+                "${it.id} -> ${it.name}${if (!it.webhook.isNullOrEmpty()) "*" else ""}"
+            }
         }
         sendText(user, textToSend)
     }
