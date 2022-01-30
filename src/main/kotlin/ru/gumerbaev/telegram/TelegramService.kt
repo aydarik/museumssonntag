@@ -17,6 +17,7 @@ import ru.gumerbaev.jpa.entity.AppUser
 import ru.gumerbaev.jpa.entity.Task
 import ru.gumerbaev.jpa.repository.AppUserRepository
 import ru.gumerbaev.jpa.repository.TaskRepository
+import java.net.URI
 
 @Context
 class TelegramService(
@@ -117,7 +118,7 @@ class TelegramService(
             }
         } else {
             textToSend = userRepository.findAll().joinToString("\n") {
-                "${it.id} -> ${it.name}${if (!it.webhook.isNullOrEmpty()) "*" else ""}"
+                "${it.id} -> ${it.name} | ${if (!it.webhook.isNullOrEmpty()) URI(it.webhook!!).host else "-"}"
             }
         }
         sendText(user, textToSend)
