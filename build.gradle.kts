@@ -1,11 +1,11 @@
 plugins {
-    id("org.jetbrains.kotlin.jvm") version "1.6.0"
-    id("org.jetbrains.kotlin.kapt") version "1.6.0"
-    id("org.jetbrains.kotlin.plugin.allopen") version "1.6.0"
-    id("org.jetbrains.kotlin.plugin.jpa") version "1.6.0"
-    id("com.github.johnrengelman.shadow") version "7.1.0"
-    id("io.micronaut.application") version "3.0.2"
-    id("com.google.cloud.tools.jib") version "3.1.4"
+    id("org.jetbrains.kotlin.jvm") version "1.6.10"
+    id("org.jetbrains.kotlin.kapt") version "1.6.10"
+    id("org.jetbrains.kotlin.plugin.allopen") version "1.6.10"
+    id("org.jetbrains.kotlin.plugin.jpa") version "1.6.10"
+    id("com.github.johnrengelman.shadow") version "7.1.2"
+    id("io.micronaut.application") version "3.2.0"
+    id("com.google.cloud.tools.jib") version "3.2.0"
 }
 
 version = "0.1"
@@ -37,7 +37,7 @@ dependencies {
     implementation("jakarta.annotation:jakarta.annotation-api")
     implementation("org.jetbrains.kotlin:kotlin-reflect:${kotlinVersion}")
     implementation("org.jetbrains.kotlin:kotlin-stdlib-jdk8:${kotlinVersion}")
-    implementation("com.github.pengrad:java-telegram-bot-api:5.5.0") // Telegram SDK
+    implementation("com.github.pengrad:java-telegram-bot-api:5.6.0") // Telegram SDK
     implementation("com.google.guava:guava:31.0.1-jre") // Guava Cache
     runtimeOnly("ch.qos.logback:logback-classic")
     runtimeOnly("com.h2database:h2")

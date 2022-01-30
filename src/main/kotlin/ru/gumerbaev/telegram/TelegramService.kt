@@ -141,7 +141,12 @@ class TelegramService(
         } else {
             textToSend = taskRepository.findAll().joinToString("\n") { "${it.id} -> ${it.museum}: ${it.user.name}" }
         }
-        sendText(user, textToSend)
+
+        if (textToSend.isEmpty()) {
+            sendText(user, "No tasks")
+        } else {
+            sendText(user, textToSend)
+        }
     }
 
     private fun formatMuseumList(): String {

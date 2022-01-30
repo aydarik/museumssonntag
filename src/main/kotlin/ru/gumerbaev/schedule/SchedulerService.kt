@@ -50,6 +50,9 @@ class SchedulerService(
             logger.info("Available slots: ${capacities.first} / ${capacities.second}")
             if (capacities.first > 0)
                 sendAvailableMessages(museumId, museumUsersMap[museumId], nextSunday, capacities)
+            else if (capacities.second > 0) {
+                sendNotAvailableMessages(museumId, museumUsersMap[museumId], nextSunday, capacities)
+            }
         }
     }
 
@@ -63,6 +66,19 @@ class SchedulerService(
         val textToSend = "Found ${capacities.first} out of ${capacities.second} " +
                 "available slots for *$nextSunday* to *${museum.title}*\n" +
                 "https://shop.museumssonntag.berlin/#/tickets/time?museum_id=$museumId&group=timeSlot&date=$nextSunday"
+        users?.forEach { user -> telegram.sendText(user, textToSend) }
+        taskRepository.deleteByMuseum(museumId)
+        logger.info("Task for museum $museumId deleted")
+    }
+
+    private fun sendNotAvailableMessages(
+        museumId: Int,
+        users: Set<AppUser>?,
+        nextSunday: LocalDate,
+        capacities: Pair<Int, Int>
+    ) {
+        val museum = api.getMuseumInfo(museumId)
+        val textToSend = "All ${capacities.second} slots are already reserved for *$nextSunday* to *${museum.title}*"
         users?.forEach { user -> telegram.sendText(user, textToSend) }
         taskRepository.deleteByMuseum(museumId)
         logger.info("Task for museum $museumId deleted")
